@@ -1,11 +1,9 @@
 import logging
-import os
-import uvicorn
-
 from typing import Annotated
 
+import uvicorn
 from fastapi import Depends, FastAPI, HTTPException, status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
@@ -18,11 +16,7 @@ from app.settings import settings
 logger = logging.getLogger(__name__)
 
 
-DEBUG = os.getenv("DEBUG", "False").lower() in ("true", "1", "t")
-
-WHITELISTED_TOKEN = os.getenv("WHITELISTED_TOKEN")
-
-if not WHITELISTED_TOKEN:
+if not settings.WHITELISTED_TOKEN:
     logger.warning("WHITELISTED_TOKEN environment variable is not set. API authentication will not work.")
 
 security = HTTPBearer()
@@ -41,13 +35,13 @@ async def verify_token(credentials: Annotated[HTTPAuthorizationCredentials, Depe
     Raises:
         HTTPException: If token is invalid or not configured
     """
-    if not WHITELISTED_TOKEN:
+    if not settings.WHITELISTED_TOKEN:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Authentication not configured",
         )
 
-    if credentials.credentials != WHITELISTED_TOKEN:
+    if credentials.credentials != settings.WHITELISTED_TOKEN:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid authentication token",
@@ -74,4 +68,4 @@ def docs_redirect():
 
 
 if __name__ == "__main__":
-    uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=DEBUG)
+    uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=settings.DEBUG)
