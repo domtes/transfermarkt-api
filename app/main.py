@@ -1,3 +1,4 @@
+import logging
 import os
 import uvicorn
 
@@ -5,7 +6,6 @@ from typing import Annotated
 
 from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
@@ -15,10 +15,15 @@ from starlette.responses import RedirectResponse
 from app.api.api import api_router
 from app.settings import settings
 
+logger = logging.getLogger(__name__)
+
 
 DEBUG = os.getenv("DEBUG", "False").lower() in ("true", "1", "t")
 
 WHITELISTED_TOKEN = os.getenv("WHITELISTED_TOKEN")
+
+if not WHITELISTED_TOKEN:
+    logger.warning("WHITELISTED_TOKEN environment variable is not set. API authentication will not work.")
 
 security = HTTPBearer()
 
