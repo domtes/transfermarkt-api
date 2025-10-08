@@ -14,7 +14,7 @@ from app.utils.utils import trim
 from app.utils.webshare import get_random_proxy
 from app.utils.xpath import Pagination
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("uvicorn.error")
 
 
 @dataclass
