@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     DEBUG: bool = False
     WHITELISTED_TOKEN: str | None = None
     WEBSHARE_API_KEY: str | None = None
+    CACHE_EXPIRY_SECONDS: int = 60 * 60
 
 
 settings = Settings()

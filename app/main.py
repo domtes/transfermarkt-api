@@ -1,9 +1,14 @@
 import logging
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from typing import Annotated
 
 import uvicorn
 from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from fastapi_cache import FastAPICache
+from fastapi_cache.backends.inmemory import InMemoryBackend
+
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
@@ -13,7 +18,6 @@ from starlette.responses import RedirectResponse
 from app.api.api import api_router
 from app.settings import settings
 
-
 logger = logging.getLogger("uvicorn.error")
 
 
@@ -21,6 +25,12 @@ if not settings.WHITELISTED_TOKEN:
     logger.warning("WHITELISTED_TOKEN environment variable is not set. API authentication will not work.")
 
 security = HTTPBearer()
+
+
+@asynccontextmanager
+async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+    FastAPICache.init(InMemoryBackend())
+    yield
 
 
 async def verify_token(credentials: Annotated[HTTPAuthorizationCredentials, Depends(security)]) -> str:
@@ -52,7 +62,7 @@ async def verify_token(credentials: Annotated[HTTPAuthorizationCredentials, Depe
     return credentials.credentials
 
 
-app = FastAPI(title="Transfermarkt API")
+app = FastAPI(title="Transfermarkt API", lifespan=lifespan, debug=settings.DEBUG)
 app.state.limiter = Limiter(
     key_func=get_remote_address,
     default_limits=[settings.RATE_LIMITING_FREQUENCY],
