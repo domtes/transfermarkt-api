@@ -62,7 +62,9 @@ async def verify_token(credentials: Annotated[HTTPAuthorizationCredentials, Depe
     return credentials.credentials
 
 
-app = FastAPI(title="Transfermarkt API", lifespan=lifespan, debug=settings.DEBUG)
+kwargs = {} if settings.DEBUG else {"docs_url": None, "redoc_url": None, "openapi_url": None}
+
+app = FastAPI(title="Transfermarkt API", lifespan=lifespan, debug=settings.DEBUG, **kwargs)
 app.state.limiter = Limiter(
     key_func=get_remote_address,
     default_limits=[settings.RATE_LIMITING_FREQUENCY],
