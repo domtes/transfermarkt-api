@@ -1,3 +1,4 @@
+import logging
 from dataclasses import dataclass, field
 from typing import Optional
 from xml.etree import ElementTree
@@ -8,8 +9,12 @@ from fastapi import HTTPException
 from lxml import etree
 from requests import Response, TooManyRedirects
 
+from app.settings import settings
 from app.utils.utils import trim
+from app.utils.webshare import get_random_proxy
 from app.utils.xpath import Pagination
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -44,6 +49,14 @@ class TransfermarktBase:
                 server error status code.
         """
         url = self.URL if not url else url
+        proxies = (
+            {"http": None, "https": None}
+            if settings.WEBSHARE_API_KEY is None
+            else {"http": get_random_proxy(), "https": get_random_proxy()}
+        )
+
+        logger.info(f"Requesting URL: {url} with proxies: {proxies}")
+
         try:
             response: Response = requests.get(
                 url=url,
@@ -55,6 +68,7 @@ class TransfermarktBase:
                         "Safari/537.36"
                     ),
                 },
+                proxies=proxies,
             )
         except TooManyRedirects:
             raise HTTPException(status_code=404, detail=f"Not found for url: {url}")

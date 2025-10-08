@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     RATE_LIMITING_FREQUENCY: str = "2/3seconds"
     DEBUG: bool = False
     WHITELISTED_TOKEN: str | None = None
+    WEBSHARE_API_KEY: str | None = None
 
 
 settings = Settings()
